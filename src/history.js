@@ -49,3 +49,16 @@ export function fastestRise(block) {
   }
   return best
 }
+
+// Events marked on the timeline. Illustrative: years and wording still to be checked.
+export const EVENTS = [
+  { year: 2010, label: 'FIFA World Cup brings a tourism boom' },
+  { year: 2014, label: 'Airbnb listings take off' },
+  { year: 2016, label: 'Densification: taller blocks approved' },
+  { year: 2019, label: 'Micro-hotel apartments multiply' },
+  { year: 2020, label: 'Covid: tourism stops' },
+  { year: 2024, label: 'City requires 50% long-term rentals by law' },
+]
+
+// The latest event at or before `year`
+export const eventBy = (year) => EVENTS.filter((e) => e.year <= Math.round(year)).at(-1)

@@ -6,7 +6,7 @@ import { SimpleMeshLayer } from '@deck.gl/mesh-layers'
 import { CubeGeometry } from '@luma.gl/engine'
 import AgentQuestions from './AgentQuestions.jsx'
 import { blockGrid, placeColumns } from './geometry.js'
-import { CURRENT_YEAR, FIRST_YEAR, fastestRise, rentIn, rentScale } from './history.js'
+import { CURRENT_YEAR, EVENTS, FIRST_YEAR, eventBy, fastestRise, rentIn, rentScale } from './history.js'
 import { advance, createStack, cubeHeight } from './stacks.js'
 
 // Colours match the portfolio's Product cards: --product-orange and its 30% white grid
@@ -96,7 +96,8 @@ export default function CityMap({ active }) {
     let last = performance.now()
     let handle
     const tick = (now) => {
-      const dt = Math.min(now - last, 60)
+      // Capped so a tab coming back from the background does not jump, but slow frames still keep real time
+      const dt = Math.min(now - last, 250)
       last = now
       let moved = false
       const gap = targetYear.current - yearShown.current
@@ -113,6 +114,15 @@ export default function CityMap({ active }) {
         moved = true
       }
       for (const [id, stack] of stacks.current) {
+        // Only the hovered and the selected block stay up; anything else goes back under,
+        // however it got left behind (pointer onto a panel, agent taking over the selection)
+        const wanted = id === hoveredId.current || id === selectedId.current
+        if (stack.rising && !wanted) {
+          stack.rising = false
+          stack.leftAt = now
+        } else if (!stack.rising && wanted) {
+          stack.rising = true
+        }
         const before = stack.version
         if (!advance(stack, dt, now)) {
           stacks.current.delete(id)
@@ -155,8 +165,17 @@ export default function CityMap({ active }) {
 
   const selectBlock = useCallback(
     (block) => {
-      if (!block || agentHasControl.current) return
+      if (agentHasControl.current) return
       const old = stacks.current.get(selectedId.current)
+      if (!block) {
+        if (old && selectedId.current !== hoveredId.current) {
+          old.rising = false
+          old.leftAt = performance.now()
+        }
+        selectedId.current = null
+        setFrame((n) => n + 1)
+        return
+      }
       if (old && selectedId.current !== block.id && selectedId.current !== hoveredId.current) {
         old.rising = false
         old.leftAt = performance.now()
@@ -200,6 +219,7 @@ export default function CityMap({ active }) {
       await wait(pause)
     }
 
+    selectBlock(null)
     agentHasControl.current = true
     setAgentRunning(true)
     setAgentSteps([])
@@ -222,11 +242,16 @@ export default function CityMap({ active }) {
       }))
     }, 2600)
     await step('get_series', `${FIRST_YEAR}–${CURRENT_YEAR}, ${CURRENT_YEAR - FIRST_YEAR + 1} years`)
-    await step('set_view', `${FIRST_YEAR}: ${rand(FIRST_YEAR)} / month`, () => chooseYear(FIRST_YEAR), 2600)
-    await step('set_view', `${peak}, fastest rise: ${rand(peak)} / month`, () => chooseYear(peak), 2600)
-    await step('set_view', `${CURRENT_YEAR}: ${rand(CURRENT_YEAR)} / month`, () => chooseYear(CURRENT_YEAR), 2600)
+    // Sweep the timeline left to right, pausing on each event
+    for (let y = FIRST_YEAR; y <= CURRENT_YEAR; y++) {
+      chooseYear(y)
+      const event = EVENTS.find((e) => e.year === y)
+      if (event) await step('set_view', `${y} · ${event.label} · ${rand(y)} / month`, null, 2200)
+      else await wait(500)
+    }
+    await wait(800)
     const rise = Math.round((rentIn(block, CURRENT_YEAR) / rentIn(block, FIRST_YEAR) - 1) * 100)
-    await step('write_brief', `Rent up ${rise}% since ${FIRST_YEAR} (illustrative)`, null, 0)
+    await step('write_brief', `Rent up ${rise}% since ${FIRST_YEAR}, fastest in ${peak} (illustrative)`, null, 0)
 
     agentHasControl.current = false
     setAgentRunning(false)
@@ -380,7 +405,12 @@ export default function CityMap({ active }) {
     : []
 
   return (
-    <div className="map">
+    <div
+      className="map"
+      onPointerOver={(e) => {
+        if (e.target.tagName !== 'CANVAS') hoverBlock(null)
+      }}
+    >
       <DeckGL
         views={VIEW}
         initialViewState={initialViewState}
@@ -405,6 +435,9 @@ export default function CityMap({ active }) {
         onHover={({ object }) => {
           if (!object) hoverBlock(null)
         }}
+        onClick={({ object }) => {
+          if (!object) selectBlock(null)
+        }}
         getCursor={({ isDragging }) => (isDragging ? 'grabbing' : 'crosshair')}
       />
 
@@ -414,6 +447,7 @@ export default function CityMap({ active }) {
             <output className="year__value" htmlFor="year-slider" aria-live="polite">
               {Math.round(yearShown.current)}
             </output>
+            <div className="year__track">
             <input
               id="year-slider"
               className="year__slider"
@@ -436,6 +470,23 @@ export default function CityMap({ active }) {
                 chooseYear(Number(e.target.value))
               }}
             />
+            {EVENTS.map((event) => (
+              <span
+                key={event.year}
+                className={`year__event${event.year <= Math.round(yearShown.current) ? ' is-past' : ''}`}
+                style={{ left: `${((event.year - FIRST_YEAR) / (CURRENT_YEAR - FIRST_YEAR)) * 100}%` }}
+                title={`${event.year}: ${event.label}`}
+                aria-hidden="true"
+              />
+            ))}
+            </div>
+            <p className="year__caption" aria-live="polite">
+              {eventBy(yearShown.current) ? (
+                <>
+                  <span>{eventBy(yearShown.current).year}</span> {eventBy(yearShown.current).label}
+                </>
+              ) : null}
+            </p>
           </div>
 
           <div className="view-switch" role="group" aria-label="Map view">

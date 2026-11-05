@@ -162,7 +162,7 @@ body { background: var(--sea); color: var(--ink); font-family: var(--font-displa
 .year {
   position: absolute; top: 12px; left: 16px; z-index: 1;
   display: grid; gap: 4px;
-  width: 168px;
+  width: min(440px, calc(100% - 140px));
 }
 .year__value {
   font-size: 4rem; font-weight: 800; font-stretch: 75%; line-height: 0.9;
@@ -188,4 +188,24 @@ body { background: var(--sea); color: var(--ink); font-family: var(--font-displa
 }
 @media (max-width: 720px) {
   .year__value { font-size: 3rem; }
+}
+
+/* Event marks sit on the slider's track; past ones turn red */
+.year__track { position: relative; padding-bottom: 10px; }
+.year__event {
+  position: absolute; bottom: 0;
+  width: 7px; height: 7px; margin-left: -3.5px;
+  background: var(--ink-soft);
+  pointer-events: none;
+}
+.year__event.is-past { background: var(--marker-red); }
+.year__caption {
+  min-height: 1.3em; margin: 2px 0 0;
+  font: 400 0.8rem var(--font-mono); color: var(--ink);
+}
+.year__caption span { color: var(--marker-red); font-weight: 500; }
+
+/* On narrow screens the panel starts below the timeline instead of covering it */
+@media (max-width: 1000px) {
+  .agent-panel { top: 150px; }
 }
