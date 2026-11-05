@@ -41,9 +41,10 @@ export function advance(stack, dt, now) {
   return stack.rising || lingering || stack.clock > 0
 }
 
-// A column pushes up out of the ground, so its lowest cubes arrive last and leave first
-export function cubeHeight(cube, clock) {
+// A column pushes up out of the ground, so its lowest cubes arrive last and leave first.
+// `scale` is the share of today's rent for the year on screen, so an earlier year sinks the column.
+export function cubeHeight(cube, clock, scale) {
   const { column, level } = cube
   const progress = smooth(Math.min(1, Math.max(0, (clock - column.delay) / column.span)))
-  return column.height * progress - level - 1
+  return column.height * scale * progress - level - 1
 }

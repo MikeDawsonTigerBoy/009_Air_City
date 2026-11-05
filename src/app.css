@@ -157,3 +157,35 @@ body { background: var(--sea); color: var(--ink); font-family: var(--font-displa
   .agent-panel { top: 16px; }
   .block-card { bottom: 72px; }
 }
+
+/* Year on screen, top left, with a slider to pick another */
+.year {
+  position: absolute; top: 12px; left: 16px; z-index: 1;
+  display: grid; gap: 4px;
+  width: 168px;
+}
+.year__value {
+  font-size: 4rem; font-weight: 800; font-stretch: 75%; line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+.year__slider { width: 100%; margin: 0; accent-color: var(--product-orange); }
+.year__slider:disabled { opacity: 0.4; }
+
+.agent-run {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; height: 44px; margin: 4px 0 12px; padding: 0 14px;
+  background: var(--ink); color: #fff; border: 0; cursor: pointer;
+  font: 500 0.8rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.agent-run:disabled { opacity: 0.6; cursor: default; }
+.agent-panel__steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; font-size: 0.85rem; line-height: 1.4; }
+.agent-panel__steps code { font: 500 0.8rem var(--font-mono); color: var(--product-orange); }
+.agent-panel__steps .is-current { font-weight: 700; }
+.agent-panel__done {
+  list-style: none; margin-left: -1.4em; margin-top: 4px;
+  display: flex; align-items: center;
+  font: 400 0.75rem var(--font-mono); color: var(--ink-soft);
+}
+@media (max-width: 720px) {
+  .year__value { font-size: 3rem; }
+}

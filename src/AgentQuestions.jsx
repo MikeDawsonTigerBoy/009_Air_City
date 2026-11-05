@@ -5,7 +5,7 @@ const TOOLS = [
   ['find_block', 'turns an address into a city block'],
   ['get_series', 'gets the block’s rent history by year'],
   ['compare_blocks', 'compares it with Sea Point as a whole'],
-  ['set_view', 'moves the camera and the timeline'],
+  ['set_view', 'moves the camera and the year'],
   ['write_brief', 'writes a short brief, every number labelled'],
 ]
 
@@ -16,8 +16,9 @@ const QUESTIONS = [
   'Do you know a source of real rent or short-term rental data for Cape Town, or for your city?',
 ]
 
-export default function AgentQuestions() {
+export default function AgentQuestions({ steps, running, onRun }) {
   const [open, setOpen] = useState(false)
+  const finished = !running && steps.length > 0
 
   return (
     <>
@@ -37,13 +38,35 @@ export default function AgentQuestions() {
             A Claude Agent SDK agent answers by choosing which tools to call, picking the years that matter and
             moving the map to show them.
           </p>
-          <ul className="agent-panel__tools">
-            {TOOLS.map(([name, does]) => (
-              <li key={name}>
-                <code>{name}</code> {does}
-              </li>
-            ))}
-          </ul>
+
+          <button className="agent-run" onClick={onRun} disabled={running}>
+            {running ? 'Running…' : finished ? 'Play again' : 'Play the preview'}
+            <span className="marker marker--next" aria-hidden="true" />
+          </button>
+
+          {steps.length > 0 ? (
+            <ol className="agent-panel__steps" aria-live="polite">
+              {steps.map((step, i) => (
+                <li key={i} className={running && i === steps.length - 1 ? 'is-current' : ''}>
+                  <code>{step.tool}</code> {step.result}
+                </li>
+              ))}
+              {finished && (
+                <li className="agent-panel__done">
+                  Scripted preview, synthetic data
+                  <span className="marker marker--end" aria-hidden="true" />
+                </li>
+              )}
+            </ol>
+          ) : (
+            <ul className="agent-panel__tools">
+              {TOOLS.map(([name, does]) => (
+                <li key={name}>
+                  <code>{name}</code> {does}
+                </li>
+              ))}
+            </ul>
+          )}
 
           <p className="agent-panel__eyebrow agent-panel__eyebrow--questions">Questions for you</p>
           <ol className="agent-panel__questions">
