@@ -4,6 +4,7 @@ import { AmbientLight, DirectionalLight, FlyToInterpolator, LightingEffect, MapV
 import { PathLayer, PolygonLayer } from '@deck.gl/layers'
 import { SimpleMeshLayer } from '@deck.gl/mesh-layers'
 import { CubeGeometry } from '@luma.gl/engine'
+import AgentQuestions from './AgentQuestions.jsx'
 import { blockGrid } from './geometry.js'
 import { advance, createStack, cubeHeight } from './stacks.js'
 
@@ -41,7 +42,7 @@ export default function CityMap({ active }) {
   const hoveredId = useRef(null)
 
   useEffect(() => {
-    fetch('/data/sea-point.json')
+    fetch(`${import.meta.env.BASE_URL}data/sea-point.json`)
       .then((res) => res.json())
       .then((json) => {
         const buildingsById = new Map(json.buildings.map((b) => [b.id, b]))
@@ -274,6 +275,8 @@ export default function CityMap({ active }) {
               <p className="block-card__key">1 cube = R1 000 / month</p>
             </aside>
           )}
+
+          <AgentQuestions />
 
           <p className="credit">
             Illustrative rents · Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors
